@@ -11,12 +11,16 @@ with open("key.txt", "r") as f:
 
 generating = False
 
+client = discord.Client()
+
 
 def generate_maps():
     global generating
+    print("regenerating maps")
     generating = True
     generator.generate_average_map()
     generator.generate_starrable_map()
+    print("regenerated maps")
     generating = False
 
 
@@ -28,35 +32,47 @@ async def on_ready():
     customActivity = discord.Game("thinking about strange things")
     await client.change_presence(status=discord.Status.online, activity=customActivity)
 
-    update_emotes()
-
     print("The bot is ready")
 
 
 @client.event
 async def on_message(message):
     global generating
-    update_emotes()
 
-    if message.author == client.user or message.channel in ignore:
+    if message.author == client.user:
         return
 
     if message.content.strip() == "??regen" and message.author.id == 384499090865782785:
+        await message.channel.send(
+            "Regenerating Maps!", allowed_mentions=discord.AllowedMentions.none()
+        )
         generate_maps()
-
+        await message.channel.send(
+            "Regenerated Maps!", allowed_mentions=discord.AllowedMentions.none()
+        )
         return
 
     if message.content.strip() == "??gsm":
         async with message.channel.typing():
             await asyncio.sleep(random.random())
-            await message.channel.send(generator.generate_starrable_message())
+            await message.channel.send(
+                generator.generate_starrable_message()
+                if not generating
+                else "Please try again later, regenerating maps currently.",
+                allowed_mentions=discord.AllowedMentions.none(),
+            )
 
         return
 
     if message.content.strip() == "??ggm":
         async with message.channel.typing():
             await asyncio.sleep(random.random())
-            await message.channel.send(generator.generate_average_message())
+            await message.channel.send(
+                generator.generate_average_message()
+                if not generating
+                else "Please try again later, regenerating maps currently.",
+                allowed_mentions=discord.AllowedMentions.none(),
+            )
 
         return
 

@@ -23,7 +23,7 @@ def generate_average_map():
         average_values[key].append(i[0])
         for j in range(len(i)):
             key += i[j]
-            key = key[-context:]
+            key = key[-AVERAGE_CONTEXT:]
             toadd = END
             try:
                 toadd = i[j + 1]
@@ -50,7 +50,7 @@ def generate_starrable_map():
         starrable_values[key].append(i[0])
         for j in range(len(i)):
             key += i[j]
-            key = key[-context:]
+            key = key[-STARRABLE_CONTEXT:]
             toadd = END
             try:
                 toadd = i[j + 1]
@@ -71,7 +71,7 @@ def generate_starrable_message():
         if message[-1] == END:
             break
 
-    return message[1:-1]
+    return message[1:-1][0:100]
 
 
 def generate_average_message():
@@ -82,4 +82,4 @@ def generate_average_message():
         if message[-1] == END:
             break
 
-    return message[1:-1]
+    return message[1:-1][0:100]
