@@ -9,6 +9,18 @@ key = ""
 with open("key.txt", "r") as f:
     key = f.read().strip()
 
+learn_messages = False
+learn_starred = True
+
+messages = []
+starred = []
+
+with open("messages.json", "r") as f:
+    messages = json.loads(f.read())
+
+with open("starred.json", "r") as f:
+    starred = json.loads(f.read())
+
 generating = False
 
 client = discord.Client()
@@ -18,8 +30,10 @@ def generate_maps():
     global generating
     print("regenerating maps")
     generating = True
-    generator.generate_average_map()
-    generator.generate_starrable_map()
+    if learn_messages:
+        generator.generate_average_map()
+    if learn_starred:
+        generator.generate_starrable_map()
     print("regenerated maps")
     generating = False
 
@@ -37,7 +51,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    global generating
+    global generating, learn_messages, learn_starred
 
     if message.author == client.user:
         return
@@ -50,6 +64,24 @@ async def on_message(message):
         await message.channel.send(
             "Regenerated Maps!", allowed_mentions=discord.AllowedMentions.none()
         )
+        return
+
+    if (
+        message.content.strip().startswith("??togglelearn")
+        and len(message.content.strip().split(" ")) == 2
+        and message.author.id == 384499090865782785
+    ):
+        if message.content.strip().split(" ")[1] == "starred":
+            learn_starred = not learn_starred
+            await message.channel.send(
+                f"Will{' not' if not learn_starred else ''} learn starred messages"
+            )
+
+        if message.content.strip().split(" ")[1] == "messages":
+            learn_messages = not learn_messages
+            await message.channel.send(
+                f"Will{' not' if not learn_messages else ''} learn general messages"
+            )
         return
 
     if message.content.strip() == "??gsm":
@@ -76,36 +108,26 @@ async def on_message(message):
 
         return
 
-    # learning
-    # if learnnew:
-    #     processed = message.content
+    if learn_messages and message.channel.id == 711821089746976768:
+        messages.append(
+            message.content.replace(generator.START, "").replace(generator.END, "")
+        )
+        with open("messages.json", "w") as f:
+            f.write(json.dumps(messages))
 
-    #     for i in dictionary_inv.keys():
-    #         processed = processed.replace(i, "")
-
-    #     for i in dictionary.keys():
-    #         processed = processed.replace(i, dictionary[i])
-
-    #     end = ""
-    #     for char in processed:
-    #         if (
-    #             char in emoji.UNICODE_EMOJI
-    #             or char in dictionary_inv.keys()
-    #             or char == "\n"
-    #             or char in specialcases
-    #         ):
-    #             end += char
-
-    #     # learning and writing, and maybe reacting
-    #     end = end.replace("\n", "n")
-    #     if end.replace("n", "") != "" and (
-    #         not message.author.bot or message.author.id in bots_allowed
-    #     ):
-    #         end = ":%s," % (end.strip("n"))
-    #         with open("messages.txt", "a", encoding="utf-8") as f:
-    #             f.write(end + "\n")
-    #         print(message.content)
-    #         print(end)
+    if (
+        learn_starred
+        and message.channel.id == 790677423083356182
+        and len(message.embeds) == 1
+        and message.embeds[0].title != "Average Because Bread User"
+    ):
+        starred.append(
+            message.embeds[0]
+            .description.replace(generator.START, "")
+            .replace(generator.END, "")
+        )
+        with open("starred.json", "w") as f:
+            f.write(json.dumps(starred))
 
 
 client.run(key)
